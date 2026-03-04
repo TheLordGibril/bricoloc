@@ -6,6 +6,9 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
       routes:
         - id: catalog-service
           uri: lb://CATALOG-SERVICE
