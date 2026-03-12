@@ -1,0 +1,93 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bricoloc-postgres
+    environment:
+      POSTGRES_DB: bricoloc
+      POSTGRES_USER: bricoloc
+      POSTGRES_PASSWORD: bricoloc
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bricoloc-net
+
+  eureka-server:
+    build:
+      context: .
+      dockerfile: eureka-server/Dockerfile
+    container_name: eureka-server
+    environment:
+      SPRING_APPLICATION_NAME: eureka-server
+      SERVER_PORT: 8761
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+    ports:
+      - "8761:8761"
+    networks:
+      - bricoloc-net
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
+    environment:
+      SPRING_APPLICATION_NAME: api-gateway
+      SERVER_PORT: 8080
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+    networks:
+      - bricoloc-net
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: catalog-service/Dockerfile
+    container_name: catalog-service
+    environment:
+      SPRING_APPLICATION_NAME: catalog-service
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://bricoloc-postgres:5432/bricoloc
+      DB_USERNAME: bricoloc
+      DB_PASSWORD: bricoloc
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    ports:
+      - "8081:8081"
+    depends_on:
+      - eureka-server
+      - postgres
+    networks:
+      - bricoloc-net
+
+  stock-service:
+    build:
+      context: .
+      dockerfile: stock-service/Dockerfile
+    container_name: stock-service
+    environment:
+      SPRING_APPLICATION_NAME: stock-service
+      SERVER_PORT: 8082
+      DB_URL: jdbc:postgresql://bricoloc-postgres:5432/bricoloc
+      DB_USERNAME: bricoloc
+      DB_PASSWORD: bricoloc
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    ports:
+      - "8082:8082"
+    depends_on:
+      - eureka-server
+      - postgres
+    networks:
+      - bricoloc-net
+
+volumes:
+  postgres_data:
+
+networks:
+  bricoloc-net:
