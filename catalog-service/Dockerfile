@@ -7,6 +7,7 @@ COPY catalog-service/mvnw ./mvnw
 COPY catalog-service/.mvn .mvn
 
 COPY eureka-server/pom.xml ./eureka-server/pom.xml
+COPY tenant-service/pom.xml ./tenant-service/pom.xml
 COPY api-gateway/pom.xml ./api-gateway/pom.xml
 COPY catalog-service/pom.xml ./catalog-service/pom.xml
 COPY stock-service/pom.xml ./stock-service/pom.xml

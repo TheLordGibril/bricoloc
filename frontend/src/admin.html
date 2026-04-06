@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BricoLoc — Administration</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300..700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --teal:       #01696f;
+            --teal-dark:  #0c4e54;
+            --teal-light: #cedcd8;
+            --bg:         #f7f6f2;
+            --surface:    #ffffff;
+            --border:     #dcd9d5;
+            --text:       #28251d;
+            --text-muted: #7a7974;
+            --error:      #a12c7b;
+            --radius:     0.75rem;
+            --shadow:     0 4px 16px oklch(0.2 0.01 80 / 0.08);
+            --font-body:  'DM Sans', sans-serif;
+            --font-display:'DM Serif Display', serif;
+        }
+        body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100dvh; }
+
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-family: var(--font-display); font-size: 1.25rem;
+            color: var(--teal); text-decoration: none;
+        }
+        .nav-logo svg { width: 28px; height: 28px; }
+        nav a { font-size: 0.9rem; color: var(--text-muted); text-decoration: none;
+            padding: 0.4rem 0.75rem; border-radius: 0.5rem; transition: background 150ms, color 150ms; }
+        nav a:hover { background: var(--bg); color: var(--teal); }
+        nav a.active { color: var(--teal); font-weight: 600; }
+
+        main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 400;
+            margin-bottom: 0.35rem;
+        }
+        .page-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+        .layout { display: grid; grid-template-columns: 1fr 400px; gap: 2rem; align-items: start; }
+        @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+        /* TABLE */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .card-title-bar {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        td {
+            padding: 0.85rem 1rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafaf8; }
+
+        .color-dot {
+            width: 14px; height: 14px; border-radius: 99px;
+            display: inline-block; vertical-align: middle;
+            border: 1px solid rgba(0,0,0,0.1);
+            margin-right: 6px;
+        }
+        .flag { font-size: 0.75rem; padding: 0.18rem 0.45rem; border-radius: 99px; font-weight: 500; }
+        .flag-on  { background: #d4f4dd; color: #166534; }
+        .flag-off { background: #f3f0ec; color: var(--text-muted); }
+
+        .btn-icon {
+            background: none; border: none; cursor: pointer;
+            padding: 0.35rem; border-radius: 6px;
+            color: var(--text-muted);
+            transition: background 150ms, color 150ms;
+        }
+        .btn-icon:hover { background: var(--bg); color: var(--error); }
+        .actions { display: flex; gap: 0.25rem; }
+
+        /* FORM */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            position: sticky;
+            top: 76px;
+        }
+        .form-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text); }
+        label .required { color: var(--error); margin-left: 2px; }
+        input[type=text], input[type=color], select {
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text);
+            background: var(--bg);
+            transition: border-color 150ms, box-shadow 150ms;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px oklch(from #01696f l c h / 0.12);
+        }
+        input[type=color] { height: 40px; padding: 0.25rem 0.5rem; cursor: pointer; }
+
+        .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-label { font-size: 0.88rem; color: var(--text); }
+
+        /* Toggle switch */
+        .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; inset: 0;
+            background: var(--border);
+            border-radius: 99px;
+            cursor: pointer;
+            transition: background 200ms;
+        }
+        .slider::before {
+            content: '';
+            position: absolute;
+            width: 16px; height: 16px;
+            left: 3px; top: 3px;
+            background: white;
+            border-radius: 99px;
+            transition: transform 200ms;
+        }
+        input:checked + .slider { background: var(--teal); }
+        input:checked + .slider::before { transform: translateX(18px); }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--teal);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 1.25rem;
+            transition: background 150ms, transform 100ms;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        .btn-submit:hover { background: var(--teal-dark); }
+        .btn-submit:active { transform: scale(0.99); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-cancel {
+            width: 100%;
+            padding: 0.6rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: background 150ms;
+        }
+        .btn-cancel:hover { background: var(--bg); }
+
+        /* TOAST */
+        .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast {
+            padding: 0.75rem 1.1rem;
+            border-radius: 0.5rem;
+            font-size: 0.88rem;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            animation: slideIn 200ms ease;
+            max-width: 320px;
+        }
+        .toast-success { background: #166534; color: white; }
+        .toast-error   { background: var(--error); color: white; }
+        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* DIALOG de confirmation */
+        .overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.35);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 200;
+        }
+        .dialog {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .dialog h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .dialog p  { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; }
+        .dialog-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .btn-danger {
+            padding: 0.55rem 1.1rem;
+            background: #a12c7b;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 150ms;
+        }
+        .btn-danger:hover { background: #7d1e5e; }
+        .btn-ghost {
+            padding: 0.55rem 1.1rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: background 150ms;
+        }
+        .btn-ghost:hover { background: var(--bg); }
+
+        .empty-row td { text-align: center; color: var(--text-muted); padding: 2.5rem; font-size: 0.9rem; }
+
+        footer { text-align: center; padding: 2rem; font-size: 0.82rem; color: var(--text-muted);
+            border-top: 1px solid var(--border); margin-top: 3rem; }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <nav>
+        <a href="/" class="nav-logo">
+            <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M4 24 L12 8 L20 18 L24 12"/>
+                <circle cx="24" cy="12" r="3" fill="currentColor" stroke="none"/>
+            </svg>
+            BricoLoc
+        </a>
+        <div style="display:flex;gap:0.25rem">
+            <a href="/">Accueil</a>
+            <a href="/admin.html" class="active">Administration</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="page-title">Administration</div>
+        <div class="page-subtitle">Gérez les sites partenaires de la plateforme BricoLoc.</div>
+
+        <div class="layout">
+
+            <!-- TABLE -->
+            <div class="card">
+                <div class="card-title-bar">
+                    <span>Sites partenaires</span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);font-weight:400">{{ tenants.length }} enregistré(s)</span>
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Domaine</th>
+                        <th>Couleur</th>
+                        <th>Options</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-if="tenants.length === 0 && !loading">
+                        <td colspan="5" class="empty-row">
+                            <div>Aucun partenaire — utilisez le formulaire pour en créer un.</div>
+                        </td>
+                    </tr>
+                    <tr v-for="t in tenants" :key="t.tenantId">
+                        <td>
+                            <div style="font-weight:600">{{ t.name }}</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);font-family:monospace">{{ t.tenantId }}</div>
+                        </td>
+                        <td style="font-family:monospace;font-size:0.82rem">{{ t.domain }}</td>
+                        <td>
+                            <span class="color-dot" :style="{ background: t.primaryColor }"></span>
+                            {{ t.primaryColor }}
+                        </td>
+                        <td>
+                            <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
+                                <span class="flag" :class="t.enableDelivery ? 'flag-on' : 'flag-off'">Livraison</span>
+                                <span class="flag" :class="t.enableDeposit ? 'flag-on' : 'flag-off'">Caution</span>
+                                <span class="flag" :class="t.enableOnlinePayment ? 'flag-on' : 'flag-off'">Paiement</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn-icon" title="Modifier" @click="editTenant(t)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </button>
+                                <button class="btn-icon" title="Supprimer" @click="confirmDelete(t)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                        <path d="M10 11v6M14 11v6"/>
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- FORM -->
+            <div class="form-card">
+                <div class="form-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path v-if="!editMode" d="M12 5v14M5 12h14"/>
+                        <path v-else d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    </svg>
+                    {{ editMode ? 'Modifier le partenaire' : 'Nouveau partenaire' }}
+                </div>
+
+                <form @submit.prevent="submitForm">
+                    <div class="form-group">
+                        <label>Identifiant unique <span class="required">*</span></label>
+                        <input type="text" v-model="form.tenantId" placeholder="ex: castotools"
+                               :disabled="editMode" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Nom affiché <span class="required">*</span></label>
+                        <input type="text" v-model="form.name" placeholder="ex: CastoTools" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Domaine <span class="required">*</span></label>
+                        <input type="text" v-model="form.domain" placeholder="ex: castotools.localhost:3000" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Logo (URL)</label>
+                        <input type="text" v-model="form.logoUrl" placeholder="https://..." />
+                    </div>
+                    <div class="form-group color-row">
+                        <div>
+                            <label>Couleur primaire</label>
+                            <input type="color" v-model="form.primaryColor" />
+                        </div>
+                        <div>
+                            <label>Couleur secondaire</label>
+                            <input type="color" v-model="form.secondaryColor" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Langue par défaut</label>
+                        <select v-model="form.defaultLanguage">
+                            <option value="fr">Français</option>
+                            <option value="en">English</option>
+                            <option value="de">Deutsch</option>
+                            <option value="es">Español</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:0.5rem">
+                        <div class="toggle-row">
+                            <span class="toggle-label">Livraison à domicile</span>
+                            <label class="toggle">
+                                <input type="checkbox" v-model="form.enableDelivery" />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Caution obligatoire</span>
+                            <label class="toggle">
+                                <input type="checkbox" v-model="form.enableDeposit" />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Paiement en ligne</span>
+                            <label class="toggle">
+                                <input type="checkbox" v-model="form.enableOnlinePayment" />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" :disabled="submitting">
+                        <svg v-if="!submitting" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path v-if="!editMode" d="M12 5v14M5 12h14"/>
+                            <path v-else d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14z"/><polyline v-if="editMode" points="17 21 17 13 7 13 7 21"/><polyline v-if="editMode" points="7 3 7 8 15 8"/>
+                        </svg>
+                        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite">
+                            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" opacity="0.25"/><path d="M21 12c0-4.97-4.03-9-9-9"/>
+                        </svg>
+                        {{ submitting ? 'Enregistrement...' : (editMode ? 'Mettre à jour' : 'Créer le partenaire') }}
+                    </button>
+                    <button v-if="editMode" type="button" class="btn-cancel" @click="resetForm">
+                        Annuler la modification
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>BricoLoc &nbsp;·&nbsp; Administration &nbsp;·&nbsp; POC 2026</footer>
+
+    <!-- TOASTS -->
+    <div class="toast-container">
+        <div v-for="t in toasts" :key="t.id" class="toast" :class="'toast-' + t.type">
+            {{ t.message }}
+        </div>
+    </div>
+
+    <!-- DIALOG SUPPRESSION -->
+    <div class="overlay" v-if="deleteTarget" @click.self="deleteTarget = null">
+        <div class="dialog">
+            <h3>Supprimer « {{ deleteTarget?.name }} » ?</h3>
+            <p>Cette action est irréversible. Le tenant et sa configuration seront supprimés de la base de données. Les produits et stocks associés ne seront pas supprimés.</p>
+            <div class="dialog-actions">
+                <button class="btn-ghost" @click="deleteTarget = null">Annuler</button>
+                <button class="btn-danger" @click="deleteTenant">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+    const { createApp, ref, onMounted } = Vue
+
+    const API = '/api'
+
+    const defaultForm = () => ({
+        tenantId: '', name: '', domain: '', logoUrl: '',
+        primaryColor: '#01696f', secondaryColor: '#0c4e54',
+        defaultLanguage: 'fr',
+        enableDelivery: true, enableDeposit: true, enableOnlinePayment: true,
+    })
+
+    createApp({
+        setup() {
+            const tenants   = ref([])
+            const loading   = ref(true)
+            const submitting = ref(false)
+            const editMode  = ref(false)
+            const form      = ref(defaultForm())
+            const toasts    = ref([])
+            const deleteTarget = ref(null)
+
+            const toast = (message, type = 'success') => {
+                const id = Date.now()
+                toasts.value.push({ id, message, type })
+                setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3500)
+            }
+
+            const loadTenants = async () => {
+                loading.value = true
+                try {
+                    const res = await fetch(`${API}/admin/tenants`)
+                    tenants.value = await res.json()
+                } catch (e) {
+                    toast('Impossible de charger les partenaires', 'error')
+                } finally {
+                    loading.value = false
+                }
+            }
+
+            const submitForm = async () => {
+                submitting.value = true
+                try {
+                    const method = editMode.value ? 'PUT' : 'POST'
+                    const url = editMode.value
+                        ? `${API}/admin/tenants/${form.value.tenantId}`
+                        : `${API}/admin/tenants`
+                    const res = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(form.value),
+                    })
+                    if (!res.ok) throw new Error(await res.text())
+                    toast(editMode.value ? 'Partenaire mis à jour ✓' : 'Partenaire créé avec succès ✓')
+                    resetForm()
+                    await loadTenants()
+                } catch (e) {
+                    toast('Erreur : ' + e.message, 'error')
+                } finally {
+                    submitting.value = false
+                }
+            }
+
+            const editTenant = (t) => {
+                form.value = { ...t }
+                editMode.value = true
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+            }
+
+            const resetForm = () => {
+                form.value = defaultForm()
+                editMode.value = false
+            }
+
+            const confirmDelete = (t) => { deleteTarget.value = t }
+
+            const deleteTenant = async () => {
+                try {
+                    const res = await fetch(`${API}/admin/tenants/${deleteTarget.value.tenantId}`, { method: 'DELETE' })
+                    if (!res.ok) throw new Error()
+                    toast(`« ${deleteTarget.value.name} » supprimé`)
+                    deleteTarget.value = null
+                    await loadTenants()
+                } catch {
+                    toast('Erreur lors de la suppression', 'error')
+                }
+            }
+
+            onMounted(loadTenants)
+
+            return { tenants, loading, submitting, editMode, form,
+                toasts, deleteTarget, submitForm, editTenant,
+                resetForm, confirmDelete, deleteTenant }
+        }
+    }).mount('#app')
+</script>
+</body>
+</html>

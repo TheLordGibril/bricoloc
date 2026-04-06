@@ -30,6 +30,26 @@ services:
     networks:
       - bricoloc-net
 
+  tenant-service:
+    build:
+      context: .
+      dockerfile: tenant-service/Dockerfile
+    container_name: tenant-service
+    environment:
+      SPRING_APPLICATION_NAME: tenant-service
+      SERVER_PORT: 8083
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      DB_URL: jdbc:postgresql://bricoloc-postgres:5432/bricoloc
+      DB_USERNAME: bricoloc
+      DB_PASSWORD: bricoloc
+    ports:
+      - "8083:8083"
+    depends_on:
+      - eureka-server
+      - postgres
+    networks:
+      - bricoloc-net
+
   api-gateway:
     build:
       context: .
@@ -39,10 +59,12 @@ services:
       SPRING_APPLICATION_NAME: api-gateway
       SERVER_PORT: 8080
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      TENANT_SERVICE_URL: http://tenant-service:8083
     ports:
       - "8080:8080"
     depends_on:
       - eureka-server
+      - tenant-service
     networks:
       - bricoloc-net
 
@@ -83,6 +105,18 @@ services:
     depends_on:
       - eureka-server
       - postgres
+    networks:
+      - bricoloc-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bricoloc-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
     networks:
       - bricoloc-net
 

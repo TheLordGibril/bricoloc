@@ -14,4 +14,6 @@ public class Product {
     private String description;
     private double price;
     private String category;
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
 }
