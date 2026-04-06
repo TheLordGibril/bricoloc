@@ -13,4 +13,6 @@ public class StockItem {
     private Long productId;  // Lien vers products.id
     private int quantity;
     private String location;
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
 }

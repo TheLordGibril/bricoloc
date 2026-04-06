@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BricoLoc</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300..700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary:      #01696f;
+            --primary-dark: #0c4e54;
+            --bg:           #f7f6f2;
+            --surface:      #ffffff;
+            --border:       #dcd9d5;
+            --text:         #28251d;
+            --text-muted:   #7a7974;
+            --radius:       0.75rem;
+            --shadow:       0 4px 16px rgba(0,0,0,0.08);
+            --font-body:    'DM Sans', sans-serif;
+            --font-display: 'DM Serif Display', serif;
+        }
+        body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100dvh; }
+
+        nav {
+            background: var(--primary);
+            padding: 0 2rem; height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-family: var(--font-display); font-size: 1.3rem;
+            color: white; text-decoration: none;
+        }
+        .nav-logo img { height: 32px; border-radius: 4px; object-fit: contain; }
+        .nav-fallback-icon {
+            width: 32px; height: 32px; background: rgba(255,255,255,0.2);
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+        }
+        .nav-links { display: flex; gap: 0.25rem; align-items: center; }
+        .nav-links a {
+            font-size: 0.88rem; color: rgba(255,255,255,0.8);
+            text-decoration: none; padding: 0.4rem 0.75rem;
+            border-radius: 0.5rem; transition: background 150ms;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.15); color: white; }
+        .nav-links a.admin-link { background: rgba(255,255,255,0.15); color: white; font-weight: 600; }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white; padding: 4rem 2rem 3.5rem; text-align: center;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 99px; font-size: 0.8rem;
+            padding: 0.3rem 0.9rem; margin-bottom: 1.25rem;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            font-weight: 400; margin-bottom: 0.75rem; line-height: 1.2;
+        }
+        .hero p { font-size: 1rem; opacity: 0.8; max-width: 480px; margin: 0 auto 2rem; line-height: 1.6; }
+
+        .services-row { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
+        .service-badge {
+            display: flex; align-items: center; gap: 0.35rem;
+            padding: 0.4rem 0.9rem; border-radius: 99px;
+            font-size: 0.82rem; font-weight: 500;
+        }
+        .service-badge.on  { background: rgba(255,255,255,0.95); color: var(--primary-dark); }
+        .service-badge.off { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); text-decoration: line-through; }
+
+        main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;
+        }
+        .section-header h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 400; }
+        .count-badge {
+            background: var(--border); color: var(--text-muted);
+            font-size: 0.8rem; font-weight: 600;
+            padding: 0.25rem 0.65rem; border-radius: 99px;
+        }
+
+        .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
+
+        .product-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+            transition: transform 150ms, box-shadow 150ms;
+            display: flex; flex-direction: column;
+        }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .product-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--bg); }
+        .product-img-placeholder {
+            width: 100%; aspect-ratio: 4/3;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--border) 100%);
+            display: flex; align-items: center; justify-content: center; color: var(--border);
+        }
+        .product-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+        .product-category {
+            font-size: 0.72rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.06em; color: var(--primary);
+        }
+        .product-name { font-weight: 600; font-size: 0.97rem; line-height: 1.3; }
+        .product-desc { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; flex: 1; }
+        .product-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1rem; border-top: 1px solid var(--border);
+        }
+        .product-price { font-weight: 700; font-size: 1rem; color: var(--primary); }
+        .product-price span { font-size: 0.75rem; font-weight: 400; color: var(--text-muted); }
+        .btn-rent {
+            padding: 0.4rem 0.9rem; background: var(--primary); color: white;
+            border: none; border-radius: 0.45rem; font-size: 0.82rem; font-weight: 500;
+            cursor: pointer; transition: background 150ms;
+        }
+        .btn-rent:hover { background: var(--primary-dark); }
+
+        @keyframes shimmer {
+            0%   { background-position: -400px 0; }
+            100% { background-position:  400px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #ece9e4 25%, #f3f0ec 50%, #ece9e4 75%);
+            background-size: 400px 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius: 6px;
+        }
+        .skeleton-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+
+        .empty { text-align: center; padding: 4rem 2rem; color: var(--text-muted); grid-column: 1 / -1; }
+        .empty h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--text); }
+
+        footer {
+            text-align: center; padding: 2rem; font-size: 0.82rem;
+            color: var(--text-muted); border-top: 1px solid var(--border); margin-top: 3rem;
+        }
+        footer strong { color: var(--primary); }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner {
+            width: 36px; height: 36px; border: 3px solid var(--border);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <template v-if="appLoading">
+        <div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+            <div class="spinner"></div>
+        </div>
+    </template>
+
+    <template v-else>
+        <nav>
+            <a href="/" class="nav-logo">
+                <img v-if="tenant && tenant.logoUrl" :src="tenant.logoUrl" :alt="tenant.name" />
+                <div v-else class="nav-fallback-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+                        <path d="M4 22 L11 6 L18 16 L22 10"/>
+                    </svg>
+                </div>
+                {{ tenant ? tenant.name : 'BricoLoc' }}
+            </a>
+            <div class="nav-links">
+                <a href="#catalogue">Catalogue</a>
+                <a href="#services">Services</a>
+                <a v-if="isAdmin" href="/admin.html" class="admin-link">⚙ Administration</a>
+            </div>
+        </nav>
+
+        <div class="hero">
+            <div class="hero-badge">📦 Location d'outils &amp; matériel</div>
+            <h1>Bienvenue chez<br>{{ tenant ? tenant.name : 'BricoLoc' }}</h1>
+            <p>Louez le matériel dont vous avez besoin, quand vous en avez besoin.</p>
+            <div class="services-row">
+        <span class="service-badge" :class="tenant && tenant.enableDelivery ? 'on' : 'off'">
+          🚚 Livraison à domicile
+        </span>
+                <span class="service-badge" :class="tenant && tenant.enableDeposit ? 'on' : 'off'">
+          🔒 Caution requise
+        </span>
+                <span class="service-badge" :class="tenant && tenant.enableOnlinePayment ? 'on' : 'off'">
+          💳 Paiement en ligne
+        </span>
+                <span class="service-badge on">🌐 {{ langLabel }}</span>
+            </div>
+        </div>
+
+        <main id="catalogue">
+            <div class="section-header">
+                <h2>Notre catalogue</h2>
+                <span class="count-badge">{{ catalog.length }} article{{ catalog.length !== 1 ? 's' : '' }}</span>
+            </div>
+
+            <div v-if="catalogLoading" class="catalog-grid">
+                <div v-for="i in 6" :key="i" class="skeleton-card">
+                    <div class="skeleton" style="aspect-ratio:4/3;width:100%"></div>
+                    <div style="padding:1rem;display:flex;flex-direction:column;gap:0.5rem">
+                        <div class="skeleton" style="height:10px;width:40%"></div>
+                        <div class="skeleton" style="height:14px;width:80%"></div>
+                        <div class="skeleton" style="height:11px;width:60%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-else-if="catalog.length === 0" class="catalog-grid">
+                <div class="empty">
+                    <div style="font-size:2.5rem;margin-bottom:0.75rem">🛠️</div>
+                    <h3>Catalogue vide</h3>
+                    <p>Aucun produit disponible pour le moment.</p>
+                </div>
+            </div>
+
+            <div v-else class="catalog-grid">
+                <div v-for="product in catalog" :key="product.id" class="product-card">
+                    <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-img" />
+                    <div v-else class="product-img-placeholder">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                    </div>
+                    <div class="product-body">
+                        <div class="product-category">{{ product.category || 'Outillage' }}</div>
+                        <div class="product-name">{{ product.name }}</div>
+                        <div class="product-desc">{{ product.description || 'Disponible à la location.' }}</div>
+                    </div>
+                    <div class="product-footer">
+                        <div class="product-price">
+                            {{ formatPrice(product.dailyPrice) }} <span>/ jour</span>
+                        </div>
+                        <button class="btn-rent">Réserver</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            Propulsé par <strong>BricoLoc</strong>
+            <span v-if="tenant"> &nbsp;·&nbsp; {{ tenant.name }} &nbsp;·&nbsp; {{ tenant.domain }}</span>
+        </footer>
+    </template>
+
+</div>
+<script>
+    const { createApp, ref, computed, onMounted } = Vue
+
+    createApp({
+        setup() {
+            const tenant         = ref(null)
+            const catalog        = ref([])
+            const appLoading     = ref(true)
+            const catalogLoading = ref(true)
+
+            const isAdmin = computed(() => window.location.hostname === 'bricoloc.localhost')
+
+            const langLabel = computed(() => {
+                const map = { fr: 'Français', en: 'English', de: 'Deutsch', es: 'Español' }
+                return tenant.value ? (map[tenant.value.defaultLanguage] || tenant.value.defaultLanguage) : 'Français'
+            })
+
+            const formatPrice = (price) => {
+                if (price == null) return '—'
+                return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
+            }
+
+            const hexToRgb = (hex) => {
+                const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+                return r ? { r: parseInt(r[1],16), g: parseInt(r[2],16), b: parseInt(r[3],16) } : null
+            }
+
+            const shadeColor = (hex, pct) => {
+                const num = parseInt(hex.replace('#',''), 16)
+                const r = Math.min(255, Math.max(0, (num >> 16) + pct))
+                const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + pct))
+                const b = Math.min(255, Math.max(0, (num & 0xff) + pct))
+                return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('')
+            }
+
+            const applyTheme = (t) => {
+                const root = document.documentElement
+                if (t.primaryColor) {
+                    root.style.setProperty('--primary', t.primaryColor)
+                    root.style.setProperty('--primary-dark', t.secondaryColor || shadeColor(t.primaryColor, -30))
+                    const rgb = hexToRgb(t.primaryColor)
+                    if (rgb) root.style.setProperty('--primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`)
+                }
+                document.title = t.name || 'BricoLoc'
+            }
+
+            onMounted(async () => {
+                // Charge le tenant — always resolve appLoading
+                try {
+                    const res = await fetch('/api/tenants/current')
+                    if (res.ok) {
+                        tenant.value = await res.json()
+                        applyTheme(tenant.value)
+                    }
+                } catch (e) {
+                    console.warn('Tenant non résolu :', e)
+                }
+                appLoading.value = false   // toujours débloqué
+
+                // Charge le catalogue
+                try {
+                    const res = await fetch('/api/catalog')
+                    if (res.ok) catalog.value = await res.json()
+                } catch (e) {
+                    console.warn('Catalogue inaccessible :', e)
+                }
+                catalogLoading.value = false
+            })
+
+            return { tenant, catalog, appLoading, catalogLoading, isAdmin, langLabel, formatPrice }
+        }
+    }).mount('#app')
+</script>
+</body>
+</html>

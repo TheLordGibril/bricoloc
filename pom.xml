@@ -17,6 +17,7 @@
         <module>eureka-server</module>
         <module>catalog-service</module>
         <module>stock-service</module>
+        <module>tenant-service</module>
     </modules>
 
     <properties>
